@@ -1,4 +1,4 @@
-/* RAGAS v6.0.0 UI — extracted for safer maintenance */
+/* RAGAS v6.1.0 UI — extracted for safer maintenance */
 /* ==========================================================================
    RAGAS FARM — design system
    Single source of truth for color, spacing, typography, radius, shadow and
@@ -673,3 +673,48 @@ body[data-role="PROJECT_MANAGER"] .adminOnly,body[data-role="PROJECT_MANAGER"] .
 body[data-role="PROJECT_MANAGER"] #booksBadge{display:none!important}
 #securityAuditTable code{font-size:11px;white-space:normal;word-break:break-word}
 @media(max-width:760px){.roleBadge{max-width:140px;overflow:hidden;text-overflow:ellipsis}.headActs .roleBadge{display:none}}
+
+/* ==========================================================================
+   RAGAS v6.1 UI CLEANUP - fewer competing controls, premium finance exports
+   ========================================================================== */
+.roleBadge{
+  background:#fff!important;
+  color:#17352a!important;
+  border-color:#c9d8cf!important;
+  box-shadow:0 1px 3px rgba(16,48,34,.14);
+  max-width:240px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.booksBadge{cursor:default;user-select:none}
+.premiumExportPanel{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:24px;
+  margin:0 0 18px;
+  padding:22px 24px;
+  border:1px solid color-mix(in srgb,var(--g) 24%,var(--line));
+  border-radius:18px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--tint) 76%,var(--card)),var(--card));
+  box-shadow:0 8px 24px rgba(20,64,43,.07);
+}
+.premiumExportPanel h3{margin:2px 0 5px;font-size:18px;letter-spacing:-.02em}
+.premiumExportPanel p{margin:0;color:var(--muted);font-size:12px;line-height:1.55;max-width:76ch}
+.premiumExportActions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.premiumExportActions .primary{min-height:42px;white-space:nowrap}
+/* Reduce the "card everywhere" look without weakening information hierarchy. */
+.card{box-shadow:0 1px 2px rgba(20,40,29,.04)}
+.listCard{box-shadow:none}
+.modernReportCard{box-shadow:none!important;background:linear-gradient(180deg,var(--card),color-mix(in srgb,var(--surface-3) 45%,var(--card)))}
+.filterCard{box-shadow:none;background:color-mix(in srgb,var(--surface-3) 42%,var(--card))}
+.safetyBackup{border-style:solid;background:color-mix(in srgb,var(--tint) 62%,var(--card))}
+@media(max-width:900px){
+  .premiumExportPanel{grid-template-columns:1fr;gap:14px;padding:18px}
+  .premiumExportActions{justify-content:flex-start}
+}
+@media(max-width:760px){
+  .headActs .roleBadge{display:inline-flex!important;max-width:112px;padding:6px 8px;font-size:9px}
+  .premiumExportActions{display:grid;grid-template-columns:1fr;width:100%}
+  .premiumExportActions .primary{width:100%;white-space:normal}
+}
