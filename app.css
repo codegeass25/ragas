@@ -718,3 +718,8 @@ body[data-role="PROJECT_MANAGER"] #booksBadge{display:none!important}
   .premiumExportActions{display:grid;grid-template-columns:1fr;width:100%}
   .premiumExportActions .primary{width:100%;white-space:normal}
 }
+/* v6.2 performance pagination: histories render in small pages and load older
+   records only when requested. Pure presentation; no record is hidden from use. */
+.historyPager{display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 8px 2px;color:var(--muted);font-size:12px}
+.historyPager.done{opacity:.72}
+@media(max-width:640px){.historyPager{flex-direction:column;align-items:stretch}.historyPager .secondary{width:100%}}

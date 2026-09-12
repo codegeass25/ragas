@@ -1,4 +1,4 @@
-const CACHE='ragas-v6.1.0';
+const CACHE='ragas-v6.2.0';
 const APP_SHELL=['./','./index.html','./app.css','./app.js','./vendor/chart.umd.js'];
 // Branding assets are now versioned (?v=<brandingVersion>) and cacheable, so
 // they are served from cache instantly instead of being re-downloaded on every
