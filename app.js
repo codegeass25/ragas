@@ -1,4 +1,4 @@
-// RAGAS v6.2.0 performance-optimized application UI logic — same business behaviour, lighter data loading
+// RAGAS v6.2.1 performance-optimized application UI logic — compact responsive Inventory management; same business behaviour
 const API=(window.VEGE_API_BASE||(location.hostname.endsWith('github.io')?'https://vege.mdmsportal.uk':location.origin)).replace(/\/$/,'');const apiPath=p=>p.startsWith('/api/')?p:'/api'+p;const $=id=>document.getElementById(id);let products=[],cash=[],sales=[],salesReturns=[],purchases=[],collections=[],supplierPayments=[],outlets=[],outletStock=[];let reportCache=null,dashboardReportCache=null,settings={};let salesConfig={creditDiscountPercent:0};const today=new Date().toISOString().slice(0,10);const ALL_REPORT_FROM='1900-01-01',ALL_REPORT_TO='2999-12-31';
 const PERF_PAGE_SIZE=100;let dashboardCounts={sales:0,purchases:0,cash:0,collections:0,supplierPayments:0,products:0};const perfHasMore={cash:false,sales:false,purchases:false,collections:false,supplierPayments:false};let recentActivity=[];
 function perfUrl(path,offset=0){return `${path}${path.includes('?')?'&':'?'}limit=${PERF_PAGE_SIZE}&offset=${Math.max(0,offset)}`}
@@ -560,55 +560,30 @@ new MutationObserver(()=>{clearTimeout(decorateTimer);decorateTimer=setTimeout((
 function compactMoney(v){const n=Math.abs(num(v));if(n>=1e6)return (v/1e6).toFixed(1)+'M';if(n>=1e3)return (v/1e3).toFixed(0)+'k';return String(Math.round(v))}
 
 let editingProductId=null;
+let managedProductId=null;
+let managedProductTab='overview';
 const ICON_EDIT='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const ICON_DELETE='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
 const ICON_SAVE='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
 const ICON_CANCEL='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 function rowInput(id,field,value,type='text'){return `<input class="rowInput" id="ed_${field}_${id}" type="${type}" ${type==='number'?'step="0.001" min="0"':''} value="${esc(String(value??''))}">`}
+function invProductIdentity(p){return `<div class="invProductIdentity"><b>${esc(p.name)}</b>${p.is_archived?' <span class="tag">Archived</span>':''}<span>${esc(p.sku||'No SKU')} · ${esc(p.category||'Uncategorized')}</span></div>`}
+function invPricingCell(p){return `<div class="invStack"><span><small>Avg cost</small><b>${money(p.unit_cost)}</b></span><span><small>Selling</small><b>${money(p.selling_price)}</b></span></div>`}
+function invStockCell(p){return `<div class="invStockCell"><b>${num(p.stock_qty).toFixed(3)} ${esc(p.unit||'unit')}</b>${p.low_stock?'<span class="tag warn">Low stock</span>':''}<small>Reorder ${num(p.reorder_level).toFixed(3)}</small>${p.expired_qty>0?`<small>Sellable ${num(p.sellable_qty).toFixed(3)}</small>`:''}</div>`}
+function invExpiryCell(p){return `<div class="invExpiryCell">${nextExpiryText(p)}<div>${expiryBadge(p)}</div></div>`}
 function productRow(p){
-  const editing=editingProductId===p.id;
-  const lotBtn=`<button class="iconBtn" title="Show lots / batches" aria-label="Show lots" onclick="toggleLots(${p.id})">${expandedLots.has(p.id)?'▾':'▸'} Lots</button>`;
-  const actions=editing
-    ? `<div class="rowActs"><button class="iconBtn save" title="Save changes" aria-label="Save changes" onclick="saveProductRow(${p.id})">${ICON_SAVE}</button><button class="iconBtn" title="Cancel" aria-label="Cancel" onclick="cancelProductRow()">${ICON_CANCEL}</button></div>`
-    : `<div class="rowActs">${lotBtn}<button class="iconBtn" title="Edit product" aria-label="Edit product" onclick="startProductRow(${p.id})">${ICON_EDIT}</button><details class="rowMenu"><summary class="iconBtn" title="More actions">•••</summary><div class="rowMenuPop"><button onclick="archiveProductRow(${p.id},${p.is_archived?0:1})">${p.is_archived?'Restore product':'Archive product'}</button><button class="dangerText" onclick="deleteProductRow(${p.id})">Delete product</button></div></details></div>`;
-  const stockCell=`${num(p.stock_qty).toFixed(3)}${p.low_stock?'<div><span class="tag warn">Low stock</span></div>':''}${p.expired_qty>0?`<div class="muted">sellable ${num(p.sellable_qty).toFixed(3)}</div>`:''}`;
-  if(!editing) return [
-    `${esc(p.name)}${p.is_archived?' <span class="tag">Archived</span>':''}`,
-    esc(p.sku),esc(p.category),esc(p.source_type),esc(p.unit),
-    money(p.unit_cost),money(p.selling_price),
-    stockCell,num(p.reorder_level).toFixed(3),
-    num(p.shelf_life_days).toFixed(0),num(p.expiry_alert_days).toFixed(0),
-    nextExpiryText(p),expiryBadge(p),actions
-  ];
   return [
-    rowInput(p.id,'name',p.name),
-    rowInput(p.id,'sku',p.sku),
-    rowInput(p.id,'category',p.category),
-    `<select class="rowInput" id="ed_source_${p.id}">${['Farm Production','Purchased','Other'].map(o=>`<option ${o===p.source_type?'selected':''}>${o}</option>`).join('')}</select>`,
-    rowInput(p.id,'unit',p.unit),
-    rowInput(p.id,'avgcost',money2s(p.unit_cost),'number'),
-    rowInput(p.id,'price',num(p.selling_price),'number'),
-    // Editing the stock quantity is the trigger for the automatic lot / batch:
-    // an increase books a stock-in adjustment and opens a new lot dated today,
-    // reusing this product's existing lot code, with the expiry date below.
-    `${rowInput(p.id,'stock',num(p.stock_qty).toFixed(3),'number')}
-      <div class="muted" style="margin-top:4px;font-size:.72rem">New lot expiry (if stock increases)</div>
-      <input class="rowInput" id="ed_lotexp_${p.id}" type="date" value="${esc(suggestedLotExpiry(p))}">
-      <div class="muted" style="margin-top:2px;font-size:.72rem">Lot code: ${esc(latestLotCode(p)||'auto')}</div>`,
-    rowInput(p.id,'reorder',num(p.reorder_level),'number'),
-    rowInput(p.id,'shelf',num(p.shelf_life_days),'number'),
-    rowInput(p.id,'alert',num(p.expiry_alert_days),'number'),
-    `<select class="rowInput" id="ed_hasexp_${p.id}"><option value="1" ${p.has_expiration?'selected':''}>Expiry tracked</option><option value="0" ${p.has_expiration?'':'selected'}>Not tracked</option></select>`,
-    `<select class="rowInput" id="ed_perish_${p.id}"><option value="1" ${p.is_perishable?'selected':''}>Perishable</option><option value="0" ${p.is_perishable?'':'selected'}>Non-perishable</option></select>`,
-    actions
+    invProductIdentity(p),
+    `<div class="invTypeCell"><b>${esc(p.source_type||'Other')}</b><span>${esc(p.unit||'unit')}</span></div>`,
+    invPricingCell(p),
+    invStockCell(p),
+    invExpiryCell(p),
+    `<button class="secondary small invManageBtn" onclick="openProductManager(${p.id},'overview')">${isSuperAdmin()?'Manage':'View'}</button>`
   ];
 }
-function lotDrawer(p){
-  const rows=(p.lots||[]);
-  const body=rows.length?rows.map(l=>`<div class="treeRow subrow"><span><b>${esc(l.lot_code||'Lot #'+l.id)}</b> • received ${esc(l.received_date)} • expiry <input class="rowInput" style="max-width:150px" type="date" id="lot_exp_${l.id}" value="${esc(l.expiry_date||'')}"> • ${num(l.remaining_qty).toFixed(3)} ${esc(p.unit||'unit')} left • ${money(l.remaining_value)} <span class="tag ${EXPIRY_TAG[l.expiry_status]||''}">${esc(l.expiry_status_label)}</span></span><span class="rowActs"><button class="iconBtn save" title="Save lot" onclick="saveLot(${l.id})">${ICON_SAVE}</button>${l.needs_spoilage_action?`<button class="secondary small" title="Expired — pending queue review" onclick="goPage('inventory','queue')">Review in Queue</button>`:''}</span></div>`).join(''):'<div class="empty">No open lots. Received stock without lot tracking is shown as untracked quantity.</div>';
-  const untracked=num(p.untracked_qty)>0?`<div class="muted" style="margin-top:6px">Untracked legacy stock: ${num(p.untracked_qty).toFixed(3)} ${esc(p.unit||'unit')} (recorded before lot tracking; always sellable).</div>`:'';
-  return `<tr><td colspan="14"><div class="reportSubDetail"><b>Lots / batches — ${esc(p.name)}</b>${body}${untracked}</div></td></tr>`;
-}
+// Kept for compatibility with older callers; the new Inventory table opens
+// Lots & Batches inside the Product Manager modal instead of expanding the row.
+function lotDrawer(){return ''}
 /* ---------------------------------------------------------------------------
    DYNAMIC INVENTORY SEARCH (read-only)
    Pure client-side visibility filtering over the SAME authoritative `products`
@@ -635,23 +610,86 @@ function onSnapshotSearch(value){
   snapshotQuery=searchNeedle(value);
   renderStocktakeCount();
 }
+function renderInventoryMiniStats(visible){
+  const el=$('inventoryMiniStats');if(!el)return;
+  const low=visible.filter(p=>p.low_stock).length;
+  const expiry=visible.filter(p=>num(p.expired_qty)>0||num(p.expiring_soon_qty)>0).length;
+  el.innerHTML=`<div class="inventoryMiniStat"><span>Products</span><b>${visible.length}</b><small>in current view</small></div><div class="inventoryMiniStat ${low?'warn':''}"><span>Low Stock</span><b>${low}</b><small>at / below reorder</small></div><div class="inventoryMiniStat ${expiry?'warn':''}"><span>Expiry Attention</span><b>${expiry}</b><small>expired / expiring soon</small></div>`;
+}
 function renderProducts(){
-  const headers=['Product','SKU','Category','Source','Unit','Current Avg Cost','Price','Stock','Reorder','Shelf Life (d)','Alert (d)','Next Expiry','Expiry Status','Actions'];
+  const headers=['Product','Type / Unit','Pricing','Stock Control','Expiry','Manage'];
   const visible=products.filter(p=>productMatchesQuery(p,inventoryQuery)).filter(p=>inventoryStatusMode==='all'||(inventoryStatusMode==='archived'?!!p.is_archived:!p.is_archived));
   const countEl=$('invSearchCount');
   if(countEl){const scope=inventoryStatusMode==='all'?'all':inventoryStatusMode;countEl.textContent=`${visible.length} ${scope} product(s)${inventoryQuery?` match "${inventoryQuery}"`:''}`;}
+  renderInventoryMiniStats(visible);
   const body=visible.map(p=>{
-    const cells=productRow(p).map(x=>`<td>${x}</td>`).join('');
-    return `<tr class="${p.expired_qty>0?'bad':''}">${cells}</tr>`+(expandedLots.has(p.id)?lotDrawer(p):'');
+    const cells=productRow(p).map((x,i)=>`<td data-label="${esc(headers[i])}"${i===0?' data-primary="1"':''}>${x}</td>`).join('');
+    return `<tr class="${p.expired_qty>0?'bad':''}">${cells}</tr>`;
   }).join('');
   const emptyText=inventoryQuery?'No products found.':'No products';
-  $('productTable').innerHTML=`<div class="tablewrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${headers.length}" class="empty">${emptyText}</td></tr>`}</tbody></table></div>`;
+  $('productTable').innerHTML=`<div class="tablewrap inventoryTableWrap"><table class="inventoryCompactTable" data-enhanced="1"><colgroup><col class="invColProduct"><col class="invColType"><col class="invColPricing"><col class="invColStock"><col class="invColExpiry"><col class="invColManage"></colgroup><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${headers.length}" class="empty tdEmpty">${emptyText}</td></tr>`}</tbody></table></div>`;
+}
+function currentManagedProduct(){return products.find(x=>Number(x.id)===Number(managedProductId))||null}
+function openProductManager(id,tab='overview'){
+  const p=products.find(x=>Number(x.id)===Number(id));if(!p)return showToast('Product not found.',true);
+  managedProductId=Number(id);managedProductTab=(tab==='edit'&&!isSuperAdmin())?'overview':tab;
+  $('productManageModal')?.classList.add('open');renderProductManager();
+}
+function closeProductManager(){managedProductId=null;managedProductTab='overview';$('productManageModal')?.classList.remove('open')}
+function productManageTab(tab){if(tab==='edit'&&!isSuperAdmin())return;managedProductTab=tab;renderProductManager()}
+function renderProductManager(){
+  const p=currentManagedProduct(),modal=$('productManageModal');if(!p||!modal){if(modal)closeProductManager();return}
+  const title=$('productManageTitle'),sub=$('productManageSubtitle'),tabs=$('productManageTabs'),body=$('productManageBody'),foot=$('productManageFooter');
+  if(title)title.textContent=p.name;if(sub)sub.textContent=`${p.sku||'No SKU'} · ${p.category||'Uncategorized'} · ${p.is_archived?'Archived':'Active'}`;
+  const availableTabs=[['overview','Overview'],['lots','Lots & Batches'],...(isSuperAdmin()?[['edit','Edit Product']]:[])];
+  if(tabs)tabs.innerHTML=availableTabs.map(([k,l])=>`<button type="button" class="${managedProductTab===k?'active':''}" onclick="productManageTab('${k}')">${l}</button>`).join('');
+  if(!availableTabs.some(([k])=>k===managedProductTab))managedProductTab='overview';
+  if(managedProductTab==='overview')body.innerHTML=renderProductOverview(p);
+  else if(managedProductTab==='lots')body.innerHTML=renderManagedLots(p);
+  else body.innerHTML=renderManagedProductEdit(p);
+  if(foot){
+    if(isSuperAdmin())foot.innerHTML=`<div class="manageDangerActions"><button class="secondary" onclick="archiveProductRow(${p.id},${p.is_archived?0:1})">${p.is_archived?'Restore Product':'Archive Product'}</button><button class="danger" onclick="deleteProductRow(${p.id})">Delete Product</button></div><button class="secondary" onclick="closeProductManager()">Close</button>${managedProductTab==='edit'?`<button class="primary" onclick="saveManagedProduct(${p.id})">Save Changes</button>`:''}`;
+    else foot.innerHTML='<button class="secondary" onclick="closeProductManager()">Close</button>';
+  }
+}
+function manageMetric(label,value,note=''){return `<div class="manageMetric"><span>${esc(label)}</span><b>${value}</b>${note?`<small>${esc(note)}</small>`:''}</div>`}
+function renderProductOverview(p){
+  const sellable=num(p.sellable_qty??p.stock_qty),stock=num(p.stock_qty),value=stock*num(p.unit_cost);
+  return `<div class="productOverviewGrid"><section class="manageSection"><div class="manageSectionHead"><div><span class="eyebrow">Product</span><h3>Basic Information</h3></div></div><div class="manageInfoGrid">${manageMetric('SKU / Code',esc(p.sku||'—'))}${manageMetric('Category',esc(p.category||'—'))}${manageMetric('Source Type',esc(p.source_type||'Other'))}${manageMetric('Unit',esc(p.unit||'unit'))}</div>${p.notes?`<div class="manageNote"><span>Notes</span><p>${esc(p.notes)}</p></div>`:''}</section><section class="manageSection"><div class="manageSectionHead"><div><span class="eyebrow">Position</span><h3>Pricing & Stock</h3></div></div><div class="manageInfoGrid">${manageMetric('Current Avg Cost',money(p.unit_cost))}${manageMetric('Selling Price',money(p.selling_price))}${manageMetric('Stock on Hand',`${stock.toFixed(3)} ${esc(p.unit||'unit')}`)}${manageMetric('Sellable Stock',`${sellable.toFixed(3)} ${esc(p.unit||'unit')}`)}${manageMetric('Inventory Value',money(value))}${manageMetric('Reorder Level',num(p.reorder_level).toFixed(3),p.low_stock?'Low stock':'Normal')}</div></section><section class="manageSection"><div class="manageSectionHead"><div><span class="eyebrow">Expiry</span><h3>Expiry Controls</h3></div>${expiryBadge(p)}</div><div class="manageInfoGrid">${manageMetric('Next Expiry',p.next_expiry_date?esc(p.next_expiry_date):'Not tracked')}${manageMetric('Shelf Life',`${num(p.shelf_life_days).toFixed(0)} days`)}${manageMetric('Alert Window',`${num(p.expiry_alert_days).toFixed(0)} days`)}${manageMetric('Perishable',p.is_perishable?'Yes':'No')}${manageMetric('Track Expiration',p.has_expiration?'Yes':'No')}</div></section></div>`;
+}
+function renderManagedLots(p){
+  const rows=p.lots||[];
+  const cards=rows.length?rows.map(l=>{const edit=isSuperAdmin()?`<div class="managedLotEdit"><label>Expiry Date<input type="date" id="lot_exp_${l.id}" value="${esc(l.expiry_date||'')}"></label><button class="secondary small" onclick="saveLot(${l.id})">Save Expiry</button></div>`:`<div class="managedLotRead"><span>Expiry</span><b>${esc(l.expiry_date||'Not tracked')}</b></div>`;return `<article class="managedLotCard"><div class="managedLotTop"><div><b>${esc(l.lot_code||'Lot #'+l.id)}</b><span>Received ${esc(l.received_date||'—')}</span></div><span class="tag ${EXPIRY_TAG[l.expiry_status]||''}">${esc(l.expiry_status_label||'—')}</span></div><div class="managedLotFacts"><span><small>Remaining</small><b>${num(l.remaining_qty).toFixed(3)} ${esc(p.unit||'unit')}</b></span><span><small>Value</small><b>${money(l.remaining_value)}</b></span></div>${edit}${l.needs_spoilage_action?`<button class="secondary small" onclick="closeProductManager();goPage('inventory','queue')">Review in Expired Stock Queue</button>`:''}</article>`}).join(''):'<div class="emptyState"><b>No open lots / batches</b><span>Received stock without lot tracking remains part of the product quantity.</span></div>';
+  const untracked=num(p.untracked_qty)>0?`<div class="notice">Untracked legacy stock: <b>${num(p.untracked_qty).toFixed(3)} ${esc(p.unit||'unit')}</b>. It remains sellable and is preserved exactly as recorded.</div>`:'';
+  return `<div class="managedLotsIntro"><div><h3>Lots & Batches</h3><p class="muted">FEFO, expiry blocking and spoilage controls remain automatic.</p></div><div class="managedLotsSummary">${num(p.stock_qty).toFixed(3)} ${esc(p.unit||'unit')} total</div></div><div class="managedLotGrid">${cards}</div>${untracked}`;
+}
+function renderManagedProductEdit(p){
+  if(!isSuperAdmin())return '<div class="notice bad">Super Admin permission is required to edit Product Master data.</div>';
+  return `<div class="manageEditGrid"><section class="manageSection"><span class="eyebrow">Product Master</span><h3>Basic Information</h3><div class="formGrid"><div class="field span2"><label>Product Name</label><input id="pm_name" value="${esc(p.name||'')}"></div><div class="field"><label>SKU / Code</label><input id="pm_sku" value="${esc(p.sku||'')}"></div><div class="field"><label>Category</label><input id="pm_category" value="${esc(p.category||'')}"></div><div class="field"><label>Source Type</label><select id="pm_source">${['Farm Production','Purchased','Other'].map(o=>`<option ${o===p.source_type?'selected':''}>${o}</option>`).join('')}</select></div><div class="field"><label>Unit</label><input id="pm_unit" value="${esc(p.unit||'unit')}"></div><div class="field span2"><label>Notes</label><input id="pm_notes" maxlength="500" value="${esc(p.notes||'')}"></div></div></section><section class="manageSection"><span class="eyebrow">Pricing</span><h3>Pricing & Stock Control</h3><div class="formGrid"><div class="field"><label>Current Avg Cost</label><input id="pm_avgcost" type="number" min="0" step="0.01" value="${money2s(p.unit_cost)}"><div class="muted">Changing this with stock on hand posts the same inventory revaluation used by the previous inline editor.</div></div><div class="field"><label>Selling Price</label><input id="pm_price" type="number" min="0" step="0.01" value="${num(p.selling_price)}"></div><div class="field"><label>Current Stock</label><input id="pm_stock" type="number" min="0" step="0.001" value="${num(p.stock_qty).toFixed(3)}"><div class="muted">A quantity change posts the same controlled stock adjustment as before.</div></div><div class="field"><label>Reorder Level</label><input id="pm_reorder" type="number" min="0" step="0.001" value="${num(p.reorder_level)}"></div><div class="field span2"><label>New Lot Expiry <span class="optional">only if stock increases</span></label><input id="pm_lotexp" type="date" value="${esc(suggestedLotExpiry(p))}"><div class="muted">Lot code remains ${esc(latestLotCode(p)||'automatic')}.</div></div></div></section><section class="manageSection"><span class="eyebrow">Expiry</span><h3>Expiry Controls</h3><div class="formGrid"><div class="field"><label>Perishable</label><select id="pm_perish"><option value="1" ${p.is_perishable?'selected':''}>Yes</option><option value="0" ${p.is_perishable?'':'selected'}>No</option></select></div><div class="field"><label>Track Expiration</label><select id="pm_hasexp"><option value="1" ${p.has_expiration?'selected':''}>Yes</option><option value="0" ${p.has_expiration?'':'selected'}>No</option></select></div><div class="field"><label>Shelf Life (days)</label><input id="pm_shelf" type="number" min="0" step="1" value="${num(p.shelf_life_days)}"></div><div class="field"><label>Expiry Alert Days</label><input id="pm_alert" type="number" min="0" step="1" value="${num(p.expiry_alert_days)}"></div></div></section></div>`;
+}
+async function saveManagedProduct(id){
+  if(!requireAdminUi())return;
+  const p=products.find(x=>Number(x.id)===Number(id))||{};
+  const v=x=>$(x)?.value;
+  const today=new Date().toISOString().slice(0,10);
+  const newCost=Number(v('pm_avgcost')||0),newStock=Number(v('pm_stock')||0),oldCost=num(p.unit_cost),oldStock=num(p.stock_qty),lotExpiry=v('pm_lotexp')||'';
+  const costChanged=Math.abs(newCost-oldCost)>0.005,stockDelta=Math.round((newStock-oldStock)*1000)/1000;
+  if(newStock<0)return showToast('Stock quantity cannot be negative.',true);
+  if(lotExpiry&&lotExpiry<today&&stockDelta>0)return showToast('New lot expiry cannot be earlier than today.',true);
+  try{
+    await api('/products/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:v('pm_name'),sku:v('pm_sku'),category:v('pm_category'),source_type:v('pm_source'),unit:v('pm_unit'),selling_price:Number(v('pm_price')||0),reorder_level:Number(v('pm_reorder')||0),shelf_life_days:Number(v('pm_shelf')||0),expiry_alert_days:Number(v('pm_alert')||0),has_expiration:Number(v('pm_hasexp')||0),is_perishable:Number(v('pm_perish')||0),notes:v('pm_notes')||''})});
+    const notes=[];
+    if(costChanged&&oldStock>0.0001){const r=await api('/inventory/revalue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:id,unit_cost:newCost,date:today,reference:'Inline average cost correction'})});notes.push(`Average cost set to ${money(newCost)} (inventory value ${num(r.delta)>=0?'+':''}${money(r.delta)}).`)}
+    else if(costChanged)notes.push('Average cost is derived from stock on hand; add stock first.');
+    if(Math.abs(stockDelta)>0.0005){const b={product_id:id,date:today,type:stockDelta>0?'ADJUST_IN':'ADJUST_OUT',quantity:Math.abs(stockDelta),unit_cost:costChanged?newCost:oldCost,reference:'Inline stock correction'};if(stockDelta>0){b.batch_lot=latestLotCode(p)||'';if(lotExpiry)b.expiry_date=lotExpiry}const r=await api('/inventory/adjust',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});notes.push(stockDelta>0?`Stock increased by ${Math.abs(stockDelta).toFixed(3)} ${p.unit||''} — new lot ${latestLotCode(p)||'auto'} received ${today}${lotExpiry?`, expiry ${lotExpiry}`:''}.`:`Stock reduced by ${Math.abs(stockDelta).toFixed(3)} ${p.unit||''} (count correction #${r.id}).`)}
+    showToast(['Product updated.',...notes].join(' '));managedProductTab='overview';editingProductId=null;await load();renderProductManager();try{await applyReportPeriod()}catch{}
+  }catch(e){showToast(e.message,true)}
 }
 
-function toggleLots(id){expandedLots.has(id)?expandedLots.delete(id):expandedLots.add(id);renderProducts()}
+function toggleLots(id){openProductManager(id,'lots')}
 function toggleArchived(){showArchived=!showArchived;const b=$('archToggleBtn');if(b)b.textContent=showArchived?'Hide Archived':'Show Archived';load()}
 async function saveLot(lotId){
-  try{await api('/inventory/lots/'+lotId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({expiry_date:$('lot_exp_'+lotId).value})});showToast('Lot expiry updated.');await load();await applyReportPeriod();}
+  try{await api('/inventory/lots/'+lotId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({expiry_date:$('lot_exp_'+lotId).value})});showToast('Lot expiry updated.');await load();if(managedProductId)renderProductManager();await applyReportPeriod();}
   catch(e){showToast(e.message,true)}
 }
 let spoilageQueue=[],spoilageQueueQuery='';
@@ -687,8 +725,8 @@ async function dismissSpoilageQueue(id){
   try{const r=await api(`/inventory/spoilage-queue/${id}/dismiss`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});showToast(r.message);await loadSpoilageQueue();}
   catch(e){showToast(e.message,true)}
 }
-function startProductRow(id){editingProductId=id;renderProducts();setTimeout(()=>$('ed_name_'+id)?.focus(),0)}
-function cancelProductRow(){editingProductId=null;renderProducts()}
+function startProductRow(id){editingProductId=id;openProductManager(id,'edit')}
+function cancelProductRow(){editingProductId=null;closeProductManager()}
 function money2s(v){return (Math.round(num(v)*100)/100).toFixed(2)}
 /** The lot code already used by this product's newest lot (kept for new lots). */
 function latestLotCode(p){
@@ -741,7 +779,7 @@ async function saveProductRow(id){
 async function deleteProductRow(id){
   const p=products.find(x=>x.id===id);
   if(!confirm(`Delete "${p?p.name:'this product'}"? Deletion is only allowed when the product has no sales, purchases, stock movements or stocktakes.`))return;
-  try{await api('/products/'+id,{method:'DELETE'});editingProductId=null;showToast('Product deleted.');await load();}
+  try{await api('/products/'+id,{method:'DELETE'});editingProductId=null;if(Number(managedProductId)===Number(id))closeProductManager();showToast('Product deleted.');await load();}
   catch(e){
     showToast(e.message,true);
     if(/archive it instead/i.test(e.message)&&confirm(`${e.message}\n\nArchive "${p?p.name:'this product'}" now instead?`)) await archiveProductRow(id,1);
@@ -750,7 +788,7 @@ async function deleteProductRow(id){
 async function archiveProductRow(id,archived){
   const p=products.find(x=>x.id===id);
   if(archived&&!confirm(`Archive "${p?p.name:'this product'}"? It stays in every report and keeps its history, but is hidden from new sales, purchases and imports.`))return;
-  try{const r=await api(`/products/${id}/archive`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archived})});showToast(r.message);await load();}
+  try{const r=await api(`/products/${id}/archive`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({archived})});showToast(r.message);await load();if(Number(managedProductId)===Number(id)){if(inventoryStatusMode==='active'&&archived)closeProductManager();else renderProductManager()}}
   catch(e){showToast(e.message,true)}
 }
 function renderCash(){$('cashTable').innerHTML=tab(['Date','Direction','Category','Amount','Description','Source'],cash.map(x=>[esc(x.date),x.direction==='in'?'Cash In':'Cash Out',esc(x.category),money(x.amount),esc(x.description),`<span class="tag">${esc(x.source||'manual')}</span>`]));}
@@ -1637,7 +1675,7 @@ renderKpis=function(){if(isSuperAdmin())return v6BaseRenderKpis();const el=$('kp
 renderAlerts=function(){if(isSuperAdmin())return v6BaseRenderAlerts();const c=(alerts||{}).counts||{},ar=num(operationalReceivables.total),ap=num(payableOptions.total);const items=[{sev:c.expired?'danger':'ok',icon:'⏱',title:'Expired stock',value:num(c.expired),desc:c.expired?'Review expired stock queue.':'No expired lots waiting.',action:c.expired?"goPage('inventory','queue')":''},{sev:c.low_stock?'warn':'ok',icon:'▥',title:'Low stock',value:num(c.low_stock),desc:c.low_stock?'Products are at/below reorder level.':'Stock levels look normal.',action:c.low_stock?"goPage('inventory')":''},{sev:ar>0?'info':'ok',icon:'₱',title:'Customer receivables',value:money(ar),desc:'Open operational customer balances.',action:ar>0?"goFinanceTab('receivables')":''},{sev:ap>0?'info':'ok',icon:'₱',title:'Supplier payables',value:money(ap),desc:'Open operational supplier balances.',action:ap>0?"goFinanceTab('payables')":''}];$('alertPanel').innerHTML=`<div class="attentionGrid">${items.map(i=>{const inner=`<span class="attentionIcon">${i.icon}</span><span><b>${i.title}</b><strong>${i.value}</strong><small>${i.desc}</small></span>${i.action?'<em>Review →</em>':'<em>Clear ✓</em>'}`;return i.action?`<button type="button" class="attentionItem ${i.sev}" onclick="${i.action}">${inner}</button>`:`<div class="attentionItem ${i.sev}">${inner}</div>`}).join('')}</div>`};
 renderDashboard=function(){if(isSuperAdmin())return v6BaseRenderDashboard();if($('booksBadge'))$('booksBadge').classList.add('hidden');renderKpis();const health=$('dashboardHealth');if(health)health.innerHTML='<div class="healthItem good"><span class="healthDot"></span><b>Operational Workspace</b><span>Transaction entry, stock and payment follow-up. Accounting administration is Super Admin-controlled.</span></div>';const card=(title,value,desc,action)=>`<button type="button" class="card reportCard modernReportCard" onclick="${action}"><div class="muted">${title}</div><div class="final-value">${value}</div><div class="dashboardExplain">${desc}</div><span class="cardLink">Open →</span></button>`;const todayPurch=purchases.filter(x=>String(x.date)===today).reduce((a,x)=>a+num(x.total),0);$('reportEntryCards').innerHTML=[card('Sales Transactions',String(num(dashboardCounts.sales)),'Record sales and review customer transactions.',"goPage('sales')"),card('Purchases',money(todayPurch),"Today's purchases and supplier activity.","goPage('purchases')"),card('Transaction History',String(num(dashboardCounts.cash)+num(dashboardCounts.sales)+num(dashboardCounts.purchases)+num(dashboardCounts.collections)+num(dashboardCounts.supplierPayments)),'Trace posted operational records.',"goPage('history')")].join('');renderAlerts()};
 const v6BaseProductRow=productRow;
-productRow=function(p){const row=v6BaseProductRow(p);if(!isSuperAdmin()){row[row.length-1]=`<div class="rowActs"><button class="iconBtn" title="Show lots / batches" aria-label="Show lots" onclick="toggleLots(${p.id})">${expandedLots.has(p.id)?'▾':'▸'} Lots</button></div>`}return row};
+productRow=function(p){const row=v6BaseProductRow(p);if(!isSuperAdmin())row[row.length-1]=`<button class="secondary small invManageBtn" onclick="openProductManager(${p.id},'overview')">View</button>`;return row};
 for(const name of ['startProductRow','archiveProductRow','deleteProductRow','openProduct','openImportHub','openOutletModal']){try{const original=window[name]||eval(name);window['v6_'+name]=original;window[name]=function(...args){if(!requireAdminUi())return;return original(...args)}}catch{}}
 const v6BaseVoidTransaction=voidTransaction;
 voidTransaction=async function(kind,id){try{const reason=isProjectManager()?prompt('Reason for reversal request:','Training correction'):'Owner reversal';if(isProjectManager()&&!reason)return;const r=await api(`/transactions/${encodeURIComponent(kind)}/${id}/void`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:reason||'Owner reversal'})});if(r?.status==='PENDING'||r?.requestId){showToast('Reversal request submitted for Super Admin approval.')}else showToast('Linked reversal posted.');await load()}catch(e){showToast(e.message,true)}};

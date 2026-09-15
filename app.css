@@ -723,3 +723,49 @@ body[data-role="PROJECT_MANAGER"] #booksBadge{display:none!important}
 .historyPager{display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 8px 2px;color:var(--muted);font-size:12px}
 .historyPager.done{opacity:.72}
 @media(max-width:640px){.historyPager{flex-direction:column;align-items:stretch}.historyPager .secondary{width:100%}}
+
+/* ==========================================================================
+   RAGAS v6.2.1 — Inventory density / responsive product management
+   Six-column desktop table + product management modal. Business logic is
+   unchanged; this section only reorganizes presentation and edit placement.
+   ========================================================================== */
+.inventoryMiniStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0 12px}
+.inventoryMiniStat{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px;min-width:0;box-shadow:var(--shadow-soft)}
+.inventoryMiniStat>span{display:block;color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.inventoryMiniStat>b{display:block;margin-top:4px;font-size:16px;line-height:1.2;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inventoryMiniStat>small{display:block;margin-top:3px;color:var(--muted);font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inventoryMiniStat.warn{background:var(--soft-amber);border-color:color-mix(in srgb,#b47a1f 28%,var(--line))}
+#productTable .inventoryTableWrap{overflow-x:visible}
+#productTable .inventoryCompactTable{table-layout:fixed;min-width:0!important;width:100%}
+#productTable .inventoryCompactTable th{white-space:normal;line-height:1.25;padding:10px 9px}
+#productTable .inventoryCompactTable td{padding:11px 9px;overflow-wrap:anywhere;word-break:normal;min-width:0}
+#productTable .inventoryCompactTable .invColProduct{width:27%}
+#productTable .inventoryCompactTable .invColType{width:12%}
+#productTable .inventoryCompactTable .invColPricing{width:15%}
+#productTable .inventoryCompactTable .invColStock{width:19%}
+#productTable .inventoryCompactTable .invColExpiry{width:18%}
+#productTable .inventoryCompactTable .invColManage{width:9%}
+.invProductIdentity,.invTypeCell,.invStockCell,.invExpiryCell{display:flex;flex-direction:column;gap:3px;min-width:0}
+.invProductIdentity>b{font-size:12.5px;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
+.invProductIdentity>span:not(.tag),.invTypeCell>span,.invStockCell>small{font-size:9.5px;color:var(--muted);line-height:1.35}
+.invTypeCell>b{font-size:11px;line-height:1.3}
+.invStack{display:grid;gap:5px;min-width:0}.invStack>span{display:flex;flex-direction:column;min-width:0}.invStack small{font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.invStack b{font-size:11px;white-space:nowrap}
+.invStockCell>b{font-size:12px}.invStockCell .tag{align-self:flex-start;margin-top:1px}
+.invExpiryCell{font-size:10.5px;line-height:1.35}.invExpiryCell>.muted{font-size:9.5px}.invExpiryCell .tag{margin-top:3px}
+.invManageBtn{width:100%;min-width:0;padding-left:7px;padding-right:7px;white-space:nowrap}
+.inventoryManageModal{max-width:900px}
+.productManageTabs{padding:12px 20px 0;margin:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--card);flex:none}
+.productManageTabs button{min-width:120px}
+.productOverviewGrid,.manageEditGrid{display:grid;gap:14px}
+.manageSection{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px;min-width:0}
+.manageSection h3{margin:2px 0 13px;font-size:15px}.manageSectionHead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.manageSectionHead h3{margin-bottom:0}
+.manageInfoGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.manageMetric{border:1px solid var(--line);border-radius:10px;background:var(--surface-2);padding:10px 11px;min-width:0}.manageMetric>span{display:block;font-size:8.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}.manageMetric>b{display:block;margin-top:4px;font-size:12px;line-height:1.35;overflow-wrap:anywhere}.manageMetric>small{display:block;margin-top:3px;font-size:9px;color:var(--muted)}
+.manageNote{margin-top:10px;padding:10px 11px;border-radius:10px;background:var(--surface-2)}.manageNote>span{font-size:8.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.05em}.manageNote p{margin:5px 0 0;font-size:11px;line-height:1.5}
+.managedLotsIntro{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.managedLotsIntro h3{margin:0 0 3px}.managedLotsIntro p{margin:0}.managedLotsSummary{border:1px solid var(--line);border-radius:999px;padding:7px 10px;background:var(--surface-2);font-size:10px;font-weight:800;white-space:nowrap}
+.managedLotGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.managedLotCard{border:1px solid var(--line);border-radius:13px;background:var(--card);padding:13px;display:grid;gap:10px;min-width:0}.managedLotTop{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.managedLotTop>div{display:flex;flex-direction:column;min-width:0}.managedLotTop b{font-size:12px;overflow-wrap:anywhere}.managedLotTop span:not(.tag){font-size:9.5px;color:var(--muted);margin-top:2px}.managedLotFacts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.managedLotFacts>span,.managedLotRead{border-radius:9px;background:var(--surface-2);padding:8px 9px;display:flex;flex-direction:column}.managedLotFacts small,.managedLotRead span{font-size:8px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em}.managedLotFacts b,.managedLotRead b{font-size:11px;margin-top:2px}.managedLotEdit{display:flex;gap:8px;align-items:end}.managedLotEdit label{flex:1;font-size:9px;color:var(--muted);font-weight:700}.managedLotEdit input{margin-top:4px;min-height:36px}.managedLotEdit button{min-height:36px;flex:none}
+.productManageFooter{align-items:center;justify-content:flex-end}.manageDangerActions{display:flex;gap:8px;margin-right:auto}.productManageFooter .danger{min-width:auto}
+@media(max-width:1180px){.inventoryMiniStats{grid-template-columns:repeat(2,minmax(0,1fr))}#productTable .inventoryCompactTable .invColProduct{width:26%}#productTable .inventoryCompactTable .invColType{width:11%}#productTable .inventoryCompactTable .invColPricing{width:15%}#productTable .inventoryCompactTable .invColStock{width:19%}#productTable .inventoryCompactTable .invColExpiry{width:19%}#productTable .inventoryCompactTable .invColManage{width:10%}.manageInfoGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px) and (min-width:768px){#productTable .inventoryCompactTable th,#productTable .inventoryCompactTable td{padding-left:6px;padding-right:6px;font-size:10px}.invProductIdentity>b{font-size:11.5px}.invStack b,.invTypeCell>b,.invStockCell>b{font-size:10.5px}.invManageBtn{font-size:9px;padding:6px 4px}.managedLotGrid{grid-template-columns:1fr}}
+@media(max-width:767px){.inventoryMiniStats{grid-template-columns:1fr 1fr;gap:7px}.inventoryMiniStat{padding:9px 10px}.inventoryMiniStat>b{font-size:14px}#productTable .inventoryTableWrap{overflow:visible}#productTable .inventoryCompactTable colgroup{display:none}#productTable .inventoryCompactTable tbody tr{padding:10px 11px;margin:9px 0}#productTable .inventoryCompactTable td{padding:7px 2px 7px 40%!important;min-height:34px}#productTable .inventoryCompactTable td::before{width:36%}#productTable .inventoryCompactTable td[data-primary="1"]{padding:2px 2px 9px!important;margin-bottom:4px}#productTable .inventoryCompactTable td:last-child{padding-left:2px!important;text-align:left}#productTable .inventoryCompactTable td:last-child::before{display:none}.invManageBtn{width:100%;min-height:38px}.productManageTabs{padding:9px 12px 0;overflow-x:auto}.productManageTabs button{min-width:max-content;flex:1}.manageInfoGrid{grid-template-columns:1fr 1fr}.managedLotGrid{grid-template-columns:1fr}.managedLotsIntro{flex-direction:column}.managedLotEdit{align-items:stretch;flex-direction:column}.productManageFooter{flex-wrap:wrap}.manageDangerActions{width:100%;margin-right:0}.manageDangerActions>*{flex:1}.productManageFooter>button{flex:1}.inventoryManageModal{max-height:94vh}}
+@media(max-width:430px){.manageInfoGrid,.inventoryMiniStats{grid-template-columns:1fr}.inventoryMiniStat>small{white-space:normal}.managedLotFacts{grid-template-columns:1fr}}
