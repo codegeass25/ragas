@@ -769,3 +769,20 @@ body[data-role="PROJECT_MANAGER"] #booksBadge{display:none!important}
 @media(max-width:900px) and (min-width:768px){#productTable .inventoryCompactTable th,#productTable .inventoryCompactTable td{padding-left:6px;padding-right:6px;font-size:10px}.invProductIdentity>b{font-size:11.5px}.invStack b,.invTypeCell>b,.invStockCell>b{font-size:10.5px}.invManageBtn{font-size:9px;padding:6px 4px}.managedLotGrid{grid-template-columns:1fr}}
 @media(max-width:767px){.inventoryMiniStats{grid-template-columns:1fr 1fr;gap:7px}.inventoryMiniStat{padding:9px 10px}.inventoryMiniStat>b{font-size:14px}#productTable .inventoryTableWrap{overflow:visible}#productTable .inventoryCompactTable colgroup{display:none}#productTable .inventoryCompactTable tbody tr{padding:10px 11px;margin:9px 0}#productTable .inventoryCompactTable td{padding:7px 2px 7px 40%!important;min-height:34px}#productTable .inventoryCompactTable td::before{width:36%}#productTable .inventoryCompactTable td[data-primary="1"]{padding:2px 2px 9px!important;margin-bottom:4px}#productTable .inventoryCompactTable td:last-child{padding-left:2px!important;text-align:left}#productTable .inventoryCompactTable td:last-child::before{display:none}.invManageBtn{width:100%;min-height:38px}.productManageTabs{padding:9px 12px 0;overflow-x:auto}.productManageTabs button{min-width:max-content;flex:1}.manageInfoGrid{grid-template-columns:1fr 1fr}.managedLotGrid{grid-template-columns:1fr}.managedLotsIntro{flex-direction:column}.managedLotEdit{align-items:stretch;flex-direction:column}.productManageFooter{flex-wrap:wrap}.manageDangerActions{width:100%;margin-right:0}.manageDangerActions>*{flex:1}.productManageFooter>button{flex:1}.inventoryManageModal{max-height:94vh}}
 @media(max-width:430px){.manageInfoGrid,.inventoryMiniStats{grid-template-columns:1fr}.inventoryMiniStat>small{white-space:normal}.managedLotFacts{grid-template-columns:1fr}}
+
+/* Keep account controls reachable on phones and preserve the tablet rail. */
+@media(min-width:768px) and (max-width:1023px){
+  #sidebar{width:var(--rail-w)}
+  #sidebar:hover,#sidebar:focus-within,#sidebar.expanded{width:248px}
+}
+@media(max-width:767px){
+  header .top{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  .headBrand{gap:7px;overflow:hidden}
+  .headBrand>div{flex:1;min-width:0}
+  .headBrand h1,.headBrand .sub{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .headActs{gap:5px}
+  .headActs .roleBadge{display:none!important}
+  #accountMenuButton{font-size:10px;padding:6px 8px;max-width:58px;min-height:38px;line-height:1.2}
+  .toolbarFilters>*{min-width:0}
+  .toolbarFilters .searchableSelect{min-width:0;width:100%}
+}
